@@ -23,14 +23,17 @@ namespace LogViewer.Services
         #region Fields
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
 
-        private static readonly Regex LogRecordPattern = new Regex(@"^(\d{4}-\d{2}-\d{2}\s)?\d{2}\:\d{2}\:\d{2}\:\d+\s\=\>\s\[[a-zA-Z]+\]\s\[[a-zA-Z\d\.\`]+\].+", RegexOptions.Compiled);
-        private static readonly Regex DateTimePattern = new Regex(@"^(\d{4}-\d{2}-\d{2}\s)?\d{2}\:\d{2}\:\d{2}\:\d+", RegexOptions.Compiled);
-        private static readonly Regex ThreadIdPattern = new Regex(@"^\[[0-9\.]+\]", RegexOptions.Compiled);
-        private static readonly Regex LogEventPattern = new Regex(@"^\[[a-zA-Z]+\]", RegexOptions.Compiled);
-        private static readonly Regex TargetTypePattern = new Regex(@"^\[[a-zA-Z\.\`\d]+\]", RegexOptions.Compiled);
+        private const string ThreadIdRegex = @"\[[A-Za-z0-9\.\-]+\]";
+        private const string DateTimeRegex = @"(\d{4}-\d{2}-\d{2}_)?\d{2}\:\d{2}\:\d{2}\.\d+";
+        private const string EventRegex = "[a-zA-Z]+";
+        
+        private static readonly Regex ThreadIdPattern = new Regex($@"^{ThreadIdRegex}", RegexOptions.Compiled);
+        private static readonly Regex LogRecordPattern = new Regex($@"{DateTimeRegex}\s\[\]\s{ThreadIdRegex}\s{EventRegex}", RegexOptions.Compiled);
+        private static readonly Regex DateTimePattern = new Regex($@"^{DateTimeRegex}", RegexOptions.Compiled);
+        private static readonly Regex LogEventPattern = new Regex($@"^{EventRegex}", RegexOptions.Compiled);
+        private static readonly Regex TargetTypePattern = new Regex(@"^[a-zA-Z\.\`\d]+", RegexOptions.Compiled);
 
         private readonly IFileService _fileService;
-
         #endregion
 
         #region Constructors
@@ -96,9 +99,9 @@ namespace LogViewer.Services
                                 record.DateTime = fileNode.DateTime.Date + record.DateTime.TimeOfDay;
                             }
 
+                            record.ThreadId = ExtractThreadId(ref line);
                             record.LogEvent = ExtractLogEventType(ref line);
                             record.TargetTypeName = ExtractTargetTypeName(ref line);
-                            record.ThreadId = ExtractThreadId(ref line);
                             record.Message = line;
                         }
                         else
@@ -121,8 +124,8 @@ namespace LogViewer.Services
         private DateTime ExtractDateTime(ref string line)
         {
             var dateTimeString = DateTimePattern.Match(line).Value;
-            line = line.Substring(dateTimeString.Length + " => ".Length).TrimStart();
-            return DateTime.ParseExact(dateTimeString, new[] { "HH:mm:ss:fff", "yyyy-MM-dd HH:mm:ss:fff" }, null, DateTimeStyles.NoCurrentDateDefault);
+            line = line.Substring(dateTimeString.Length + " [] ".Length).TrimStart();
+            return DateTime.ParseExact(dateTimeString, new[] { "HH:mm:ss.fff", "yyyy-MM-dd_HH:mm:ss.fff" }, null, DateTimeStyles.NoCurrentDateDefault);
         }
 
         private LogEvent ExtractLogEventType(ref string line)
@@ -130,6 +133,11 @@ namespace LogViewer.Services
             var eventTypeString = LogEventPattern.Match(line).Value;
             line = line.Substring(eventTypeString.Length).TrimStart();
             eventTypeString = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(eventTypeString.Trim('[', ']').ToLowerInvariant());
+            switch (eventTypeString)
+            {
+                case "Warn": eventTypeString = "Warning";
+                    break;
+            }
             return (LogEvent)Enum.Parse(typeof(LogEvent), eventTypeString);
         }
 

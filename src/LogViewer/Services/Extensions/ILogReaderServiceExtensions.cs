@@ -11,7 +11,7 @@ namespace LogViewer.Services
     using System.Threading.Tasks;
     using Models;
 
-    public static class ILogReaderServiceExtensions
+    public static class LogReaderServiceExtensions
     {
         public static Task<IEnumerable<LogRecord>> LoadRecordsFromFileAsync(this ILogReaderService logReaderService, FileNode fileNode)
         {

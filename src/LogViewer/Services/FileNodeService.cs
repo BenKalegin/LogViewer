@@ -26,7 +26,7 @@ namespace LogViewer.Services
     {
         #region Fields
         private static readonly ILog Log = LogManager.GetCurrentClassLogger();
-        private static readonly Regex _fileNameMask = new Regex(@"^[a-zA-Z\.]+_(\d{4}-\d{2}-\d{2})_\d{6}_\d+\.log$", RegexOptions.Compiled);
+        private static readonly Regex FileNameMask = new Regex(@"^[a-zA-Z\.]+_(\d{4}-\d{2}-\d{2})_\d{6}_\d+\.log$", RegexOptions.Compiled);
         private readonly IDispatcherService _dispatcherService;
         private readonly IFilterService _filterService;
         private readonly object _lockObject = new object();
@@ -58,7 +58,7 @@ namespace LogViewer.Services
             var fileNode = new FileNode(new FileInfo(fileName));
 
             fileNode.Name = fileNode.FileInfo.Name;
-            fileNode.IsUnifyNamed = _fileNameMask.IsMatch(fileNode.FileInfo.Name);
+            fileNode.IsUnifyNamed = FileNameMask.IsMatch(fileNode.FileInfo.Name);
             if (!fileNode.IsUnifyNamed)
             {
                 fileNode.Name = fileNode.FileInfo.Name;
@@ -87,7 +87,7 @@ namespace LogViewer.Services
                     var logRecords = fileNode.Records;
                     using (logRecords.SuspendChangeNotifications())
                     {
-                        ((ICollection<LogRecord>)logRecords).ReplaceRange(fileRecords);
+                        logRecords.ReplaceRange(fileRecords);
                     }
                 }, true);
             }

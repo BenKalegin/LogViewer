@@ -143,10 +143,7 @@ namespace LogViewer.ViewModels
 
                 _filterService.ApplyLogRecordsFilter();
 
-                if (clearableModel is not null)
-                {
-                    clearableModel.MarkClean();
-                }
+                clearableModel?.MarkClean();
             });
         }
 

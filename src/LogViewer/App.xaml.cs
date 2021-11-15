@@ -40,10 +40,20 @@ namespace LogViewer
             _stopwatch = new Stopwatch();
             _stopwatch.Start();
             _start = DateTime.Now;
+            this.Dispatcher.UnhandledException += OnDispatcherUnhandledException;
         }
         #endregion
 
+        
         #region Methods
+        private static void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e) {
+            var errorMessage = $"An unhandled exception occurred: {e.Exception.Message}";
+            MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            // OR whatever you want like logging etc. MessageBox it's just example
+            // for quick debugging etc.
+            e.Handled = true;
+        }            
+        
 #pragma warning disable AvoidAsyncVoid // Avoid async void
         protected override async void OnStartup(StartupEventArgs e)
 #pragma warning restore AvoidAsyncVoid // Avoid async void
